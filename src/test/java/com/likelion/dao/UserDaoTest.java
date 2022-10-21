@@ -58,7 +58,7 @@ class UserDaoTest {
 
     @Test
     void findById() throws SQLException {
-        assertThrows(EmptyResultDataAccessException.class,()->{
+        assertThrows(RuntimeException.class,()->{
             userDao.findById("500");
         });
     }

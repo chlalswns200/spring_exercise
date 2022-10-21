@@ -34,10 +34,8 @@ public class UserDao {
         Map<String, String> env = System.getenv();
         Connection c;
         try {
-            // DB접속 (ex sql workbeanch실행)
             c = connectionMaker.makeConnection();
 
-            // Query문 작성
             PreparedStatement pstmt = c.prepareStatement("SELECT * FROM users WHERE id = ?");
             pstmt.setString(1, id);
 
@@ -61,7 +59,6 @@ public class UserDao {
     public void deleteAll() {
         Connection conn = null;
         PreparedStatement ps = null;
-
         try {
             conn = connectionMaker.makeConnection();
             ps = conn.prepareStatement(
@@ -101,6 +98,7 @@ public class UserDao {
             int count = rs.getInt(1);
             return count;
         } catch (SQLException e) {
+
             throw new RuntimeException(e);
         } finally {
             if (rs != null) {
