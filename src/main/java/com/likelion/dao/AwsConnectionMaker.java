@@ -5,7 +5,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Map;
 
-public class AwsConnectionMake implements ConnectionMaker {
+public class AwsConnectionMaker implements ConnectionMaker {
 
     @Override
     public Connection makeConnection() throws SQLException {

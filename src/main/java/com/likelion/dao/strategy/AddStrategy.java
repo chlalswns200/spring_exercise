@@ -1,6 +1,6 @@
 package com.likelion.dao.strategy;
 
-import week5.week5_day1.dbexercise.domain.User;
+import com.likelion.domain.User;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

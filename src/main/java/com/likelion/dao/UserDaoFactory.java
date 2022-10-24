@@ -8,7 +8,7 @@ public class UserDaoFactory {
 
     @Bean
     public UserDao awsUserDao() {
-        AwsConnectionMake awsConnection = new AwsConnectionMake();
+        AwsConnectionMaker awsConnection = new AwsConnectionMaker();
         UserDao userDao = new UserDao();
         return userDao;
     }

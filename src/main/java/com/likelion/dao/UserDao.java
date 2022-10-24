@@ -2,72 +2,35 @@ package com.likelion.dao;
 
 import java.sql.*;
 import java.util.Map;
+
+import com.likelion.dao.strategy.AddStrategy;
+import com.likelion.dao.strategy.DeleteAllStrategy;
+import com.likelion.dao.strategy.StatementStrategy;
 import com.likelion.domain.User;
+import org.springframework.dao.EmptyResultDataAccessException;
 
 public class UserDao {
 
-    private final ConnectionMaker connectionMaker;
+    private ConnectionMaker connectionMaker;
 
     public UserDao() {
-        this.connectionMaker = new AwsConnectionMake();
+        this.connectionMaker = new AwsConnectionMaker();
     }
 
     public UserDao(ConnectionMaker connectionMaker) {
         this.connectionMaker = connectionMaker;
     }
-    public void add(User user) throws SQLException {
-        Connection conn = connectionMaker.makeConnection();
 
-        PreparedStatement ps = conn.prepareStatement(
-                "INSERT INTO users(id,name,password) values(?,?,?)"
-        );
-        ps.setString(1,user.getId());
-        ps.setString(2,user.getName());
-        ps.setString(3,user.getPassword());
-
-        int status = ps.executeUpdate();
-        ps.close();
-        conn.close();
-    }
-
-    public User findById(String id) {
-        Map<String, String> env = System.getenv();
-        Connection c;
-        try {
-            c = connectionMaker.makeConnection();
-
-            PreparedStatement pstmt = c.prepareStatement("SELECT * FROM users WHERE id = ?");
-            pstmt.setString(1, id);
-
-            // Query문 실행
-            ResultSet rs = pstmt.executeQuery();
-            rs.next();
-            User user = new User(rs.getString("id"), rs.getString("name"),
-                    rs.getString("password"));
-
-            rs.close();
-            pstmt.close();
-            c.close();
-
-            return user;
-
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void deleteAll() {
+    public void jdbcContextWithStatementStrategy(StatementStrategy stmt) throws SQLException {
         Connection conn = null;
         PreparedStatement ps = null;
         try {
             conn = connectionMaker.makeConnection();
-            ps = conn.prepareStatement(
-                    "DELETE FROM users");
+            ps = stmt.makePreparedStatement(conn);
             ps.executeUpdate();
-
         } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } finally {
+            throw e;
+        } finally{
             if (ps != null) {
                 try {
                     ps.close();
@@ -82,6 +45,37 @@ public class UserDao {
                 }
             }
         }
+
+    }
+
+    public void add(User user) throws SQLException {
+        jdbcContextWithStatementStrategy(new AddStrategy(user));
+    }
+
+    public User findById(String id) throws SQLException {
+
+        Connection conn = connectionMaker.makeConnection();
+        PreparedStatement ps = conn.prepareStatement(
+                "select id, name ,password FROM users WHERE id = ?");
+        ps.setString(1, id);
+
+        ResultSet rs = ps.executeQuery();
+        User user = null;
+        if (rs.next()) {
+            user = new User(rs.getString("id"), rs.getString("name"), rs.getString("password"));
+        }
+
+        rs.close();
+        ps.close();
+        conn.close();
+
+        if(user ==null) throw new EmptyResultDataAccessException(1);
+        return user;
+
+    }
+
+    public void deleteAll() throws SQLException {
+        jdbcContextWithStatementStrategy(new DeleteAllStrategy());
 
     }
 
@@ -98,7 +92,6 @@ public class UserDao {
             int count = rs.getInt(1);
             return count;
         } catch (SQLException e) {
-
             throw new RuntimeException(e);
         } finally {
             if (rs != null) {
@@ -113,6 +106,7 @@ public class UserDao {
                 } catch (SQLException e) {
                 }
             }
+
             if (conn != null) {
                 try {
                     conn.close();
@@ -121,6 +115,5 @@ public class UserDao {
             }
         }
     }
-
-
 }
+
